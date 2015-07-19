@@ -8,12 +8,10 @@ package psmockrequestgen;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -30,6 +28,8 @@ public class PSMockRequestGen {
     static int COLID_REQUIREDSCENARIOSTATE = 4;
     static int COLID_NEWSCENARIOSTATE = 5;
     static int COLID_BODYCONTAINS = 6;
+    static int COLID_PRIORITY = 7;
+    static int COLID_BODY = 8;
 
     /**
      * @param args the command line arguments
@@ -39,7 +39,7 @@ public class PSMockRequestGen {
         String ouputBaseFolder = "";
 
         /* Set Default Values */
-        excelFileName = "C:\\Users\\anisha\\Desktop\\Anisha\\RequestGen\\Requests.xlsx";
+        excelFileName = "C:/Requests.xlsx";
         ouputBaseFolder = "C:/mappings";
 
         /* Read Command Line Arguments */
@@ -68,6 +68,8 @@ public class PSMockRequestGen {
                 String requiredScenarioState = getCellValue(sheet, rowIndex, COLID_REQUIREDSCENARIOSTATE);
                 String newScenarioState = getCellValue(sheet, rowIndex, COLID_NEWSCENARIOSTATE);
                 String bodyContains = getCellValue(sheet, rowIndex, COLID_BODYCONTAINS);
+                String priority = getCellValue(sheet, rowIndex, COLID_PRIORITY);
+                String body = getCellValue(sheet, rowIndex, COLID_BODY);
 
                 ArrayList<String> listOfBodyContains = new ArrayList<String>();
                 for (String bodyContainsLine : bodyContains.split("\n")) {
@@ -87,6 +89,9 @@ public class PSMockRequestGen {
                 PrintWriter printWriter = new PrintWriter(outputFile);
 
                 printWriter.println(String.format("{"));
+                if (!priority.equalsIgnoreCase("")) {
+                    printWriter.println(String.format("    \"priority\": %s,", priority));
+                }
                 if (!scenarioName.equalsIgnoreCase("")) {
                     printWriter.println(String.format("    \"scenarioName\": \"%s\",", scenarioName));
                 }
@@ -102,11 +107,13 @@ public class PSMockRequestGen {
                 printWriter.println(String.format("        \"bodyPatterns\": ["));
                 //printWriter.println(String.format("            {"));
                 for (String bodyContainsString : listOfBodyContains) {
+                    printWriter.println(String.format("            {"));
+                    printWriter.println(String.format("                \"contains\": \"%s\"", bodyContainsString));
                     // Write , if not last string
                     if (bodyContainsString != listOfBodyContains.get(listOfBodyContains.size() - 1)) {
-                        printWriter.println(String.format("              { \"contains\": \"%s\" },", bodyContainsString));
+                        printWriter.println(String.format("            },"));
                     } else {
-                        printWriter.println(String.format("              { \"contains\": \"%s\" }", bodyContainsString));
+                        printWriter.println(String.format("            }"));
                     }
                 }
                 //printWriter.println(String.format("            }"));
@@ -114,7 +121,15 @@ public class PSMockRequestGen {
                 printWriter.println(String.format("    },"));
                 printWriter.println(String.format("    \"response\": {"));
                 printWriter.println(String.format("        \"status\": 200,"));
-                printWriter.println(String.format("        \"bodyFileName\": \"%s\",", responseFile));
+                if (!responseFile.equalsIgnoreCase("")) {
+                    printWriter.println(String.format("        \"bodyFileName\": \"%s\",", responseFile));
+                }
+                if (!body.equalsIgnoreCase("")) {
+                    printWriter.println(String.format("        \"body\": \"%s\",", body));
+                }
+                if (responseFile.equalsIgnoreCase("") && body.equalsIgnoreCase("")) {
+                    printWriter.println(String.format("        \"body\": \"\","));
+                }
                 printWriter.println(String.format("        \"headers\": {"));
                 printWriter.println(String.format("            \"Access-Control-Allow-Origin\": \"http://localhost:4503\","));
                 printWriter.println(String.format("            \"Access-Control-Allow-Credentials\": \"true\","));
